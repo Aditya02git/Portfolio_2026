@@ -10,10 +10,6 @@ import { getSkillByMesh }    from '../interactions/skills.js'
 const LIGHT_MESHES  = ['Wall_Lamp_1', 'TubeLight_1']
 const SCREEN_MESHES = ['Screen', 'screen', 'Monitor_Screen']
 
-// ── Preload starts fetching the GLB immediately when this module is imported,
-//    before React even renders — so Suspense resolves faster.
-useGLTF.preload('/portfolio.glb')
-
 export default function Model({
   onReady,
   onObjectClick,
@@ -24,7 +20,7 @@ export default function Model({
   onScreenClick,
   onDrawerClick,
 }) {
-  const gltf = useGLTF('/portfolio.glb')
+  const gltf = useGLTF('/portfolio_original.glb')
   const { scene } = gltf
 
   const { mixerRef, ready: mixerReady } = useSharedMixer(gltf)
@@ -53,6 +49,7 @@ export default function Model({
     // ── Drawers ────────────────────────────────────────────────────────────
     const drawerName = getDrawerName(name)
     if (drawerName) {
+      // Capture state BEFORE toggling: closed → willOpen = true
       const willOpen = !isDrawerOpen(drawerName)
       toggleDrawer(drawerName)
       if (onDrawerClick) onDrawerClick(drawerName, willOpen)

@@ -1,7 +1,9 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, useProgress } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import Model from './scene/Model.jsx'
+import Renderer from './scene/Renderer.jsx'
 import OutlineEffect from './scene/OutlineEffect.jsx'
 import ScreenCamera from './scene/ScreenCamera.jsx'
 import ScreenOS from './scene/ScreenOS.jsx'
@@ -19,86 +21,20 @@ import IntroScreen from './ui/IntroScreen.jsx'
 import SleepEffect from './scene/SleepEffect.jsx'
 import CameraFly from './scene/CameraFly.jsx'
 import SmokeEffect from './scene/SmokeEffect.jsx'
-import PlayingBanner from './ui/PlayingBanner.jsx'
-import Model from './scene/Model.jsx'
-import Renderer from './scene/Renderer.jsx'
+import PlayingBanner from './ui/PlayingBanner.jsx'  // ← new
 
 const NIGHT_CHECK_INTERVAL = 2000
 
-// ── Inner component so useProgress can run inside Canvas context ──────────────
-function SceneWithProgress({ onProgress, ...sceneProps }) {
-  const { progress } = useProgress()
-
-  useEffect(() => {
-    onProgress(progress)
-  }, [progress, onProgress])
-
-  return <SceneContents {...sceneProps} />
-}
-
-// ── All the scene contents, extracted so App stays clean ─────────────────────
-function SceneContents({
-  onReady,
-  onObjectClick,
-  onLightClick,
-  onSceneReady,
-  onAcToggle,
-  onSkillClick,
-  onScreenClick,
-  onDrawerClick,
-  ready,
-  scene3D,
-  wallLampOn,
-  tubeLightOn,
-  flickering,
-  acOn,
-  screenActive,
-  progressRef,
-  cycleDurationRef,
-}) {
-  return (
-    <Suspense fallback={null}>
-      <Model
-        onReady={onReady}
-        onObjectClick={onObjectClick}
-        onLightClick={onLightClick}
-        onSceneReady={onSceneReady}
-        onAcToggle={onAcToggle}
-        onSkillClick={onSkillClick}
-        onScreenClick={onScreenClick}
-        onDrawerClick={onDrawerClick}
-      />
-      {ready && scene3D && (
-        <>
-          <Renderer progressRef={progressRef} cycleDurationRef={cycleDurationRef} mode={WEATHER_MODE} />
-          <OutlineEffect />
-          <WallLampLight  on={wallLampOn}  scene={scene3D} />
-          <TubeLightLight on={tubeLightOn} flickering={flickering} scene={scene3D} />
-          <AcGlowEffect   on={acOn}        scene={scene3D} />
-          <ScreenCamera
-            active={screenActive}
-            scene={scene3D}
-          />
-          <SleepEffect scene={scene3D} />
-          <SmokeEffect scene={scene3D} />
-        </>
-      )}
-    </Suspense>
-  )
-}
-
 export default function App() {
-  const [ready, setReady]               = useState(false)
-  const [scene3D, setScene3D]           = useState(null)
-  const [acOn, setAcOn]                 = useState(false)
+  const [ready, setReady]         = useState(false)
+  const [scene3D, setScene3D]     = useState(null)
+  const [acOn, setAcOn]           = useState(false)
   const [screenActive, setScreenActive] = useState(false)
-  const [showOS, setShowOS]             = useState(false)
-  const [showIntro, setShowIntro]       = useState(true)
+  const [showOS, setShowOS]       = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
   const [cycleDuration, setCycleDuration] = useState(60)
-  const [hoveredName, setHoveredName]   = useState(null)
-  const [skillTrigger, setSkillTrigger] = useState(null)
-  const [loadProgress, setLoadProgress] = useState(0)
-
+  const [hoveredName, setHoveredName]     = useState(null)
+  const [skillTrigger, setSkillTrigger]   = useState(null)
   const progressRef      = useRef(0)
   const cycleDurationRef = useRef(60)
   const orbitRef         = useRef()
@@ -211,31 +147,36 @@ export default function App() {
         }}
       >
         <DynamicSceneLighting progressRef={progressRef} />
-
-        {/* SceneWithProgress lives inside Canvas so useProgress works correctly */}
-        <SceneWithProgress
-          onProgress={setLoadProgress}
-          onReady={setReady}
-          onObjectClick={handleObjectClick}
-          onLightClick={handleLightClick}
-          onSceneReady={setScene3D}
-          onAcToggle={setAcOn}
-          onSkillClick={setSkillTrigger}
-          onScreenClick={handleScreenClick}
-          onDrawerClick={handleDrawerClick}
-          ready={ready}
-          scene3D={scene3D}
-          wallLampOn={wallLampOn}
-          tubeLightOn={tubeLightOn}
-          flickering={flickering}
-          acOn={acOn}
-          screenActive={screenActive}
-          progressRef={progressRef}
-          cycleDurationRef={cycleDurationRef}
-        />
-
+        <Suspense fallback={null}>
+          <Model
+            onReady={setReady}
+            onObjectClick={handleObjectClick}
+            onLightClick={handleLightClick}
+            onSceneReady={setScene3D}
+            onAcToggle={setAcOn}
+            onSkillClick={setSkillTrigger}
+            onScreenClick={handleScreenClick}
+            onDrawerClick={handleDrawerClick}
+          />
+          {ready && scene3D && (
+            <>
+              <Renderer progressRef={progressRef} cycleDurationRef={cycleDurationRef} mode={WEATHER_MODE} />
+              <OutlineEffect />
+              <WallLampLight  on={wallLampOn}  scene={scene3D} />
+              <TubeLightLight on={tubeLightOn} flickering={flickering} scene={scene3D} />
+              <AcGlowEffect   on={acOn}        scene={scene3D} />
+              <ScreenCamera
+                active={screenActive}
+                scene={scene3D}
+                onArrived={() => setShowOS(true)}
+              />
+              <SleepEffect scene={scene3D} />
+              <SmokeEffect scene={scene3D} />
+              <CameraFly ref={cameraFlyRef} scene={scene3D} />
+            </>
+          )}
+        </Suspense>
         <OrbitControls ref={orbitRef} />
-        <CameraFly ref={cameraFlyRef} scene={scene3D} />
       </Canvas>
 
       {ready && !showOS && (
@@ -265,14 +206,7 @@ export default function App() {
       )}
 
       {showOS && <ScreenOS onExit={handleExitScreen} />}
-
-      {/* IntroScreen stays visible until user clicks Explore AND scene is loaded */}
-      {showIntro && (
-        <IntroScreen
-          progress={loadProgress}
-          onDone={() => setShowIntro(false)}
-        />
-      )}
+      {showIntro && <IntroScreen onDone={() => setShowIntro(false)} />}
     </div>
   )
 }
