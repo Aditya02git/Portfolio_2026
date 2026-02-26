@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useProgress } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import Model from './scene/Model.jsx'
+
 import Renderer from './scene/Renderer.jsx'
 import OutlineEffect from './scene/OutlineEffect.jsx'
 import ScreenCamera from './scene/ScreenCamera.jsx'
@@ -22,6 +22,7 @@ import SleepEffect from './scene/SleepEffect.jsx'
 import CameraFly from './scene/CameraFly.jsx'
 import SmokeEffect from './scene/SmokeEffect.jsx'
 import PlayingBanner from './ui/PlayingBanner.jsx'
+import Model from './scene/model.jsx'
 
 const NIGHT_CHECK_INTERVAL = 2000
 
