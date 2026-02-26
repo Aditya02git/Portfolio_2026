@@ -22,7 +22,7 @@ import SleepEffect from './scene/SleepEffect.jsx'
 import CameraFly from './scene/CameraFly.jsx'
 import SmokeEffect from './scene/SmokeEffect.jsx'
 import PlayingBanner from './ui/PlayingBanner.jsx'
-import Model from './scene/model.jsx'
+import Model from './scene/Model.jsx'
 
 const NIGHT_CHECK_INTERVAL = 2000
 
