@@ -2,7 +2,6 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useProgress } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-
 import Renderer from './scene/Renderer.jsx'
 import OutlineEffect from './scene/OutlineEffect.jsx'
 import ScreenCamera from './scene/ScreenCamera.jsx'
