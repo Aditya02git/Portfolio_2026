@@ -1,42 +1,41 @@
 /**
  * IntroScreen.jsx
- * Cinematic title-card intro that plays once on load, then fades away.
- * Drop into App.jsx: show it before `ready`, or overlay it on top.
+ * Cinematic title-card intro with real GLB loading progress bar.
+ * "Explore" button is disabled until the scene is fully loaded (progress === 100).
  *
  * Usage:
  *   import IntroScreen from './ui/IntroScreen.jsx'
  *   ...
- *   {showIntro && <IntroScreen onDone={() => setShowIntro(false)} />}
+ *   {showIntro && <IntroScreen progress={progress} onDone={() => setShowIntro(false)} />}
  */
 
 import { useEffect, useState } from 'react'
 
-const HOLD_START  = 600    // ms — how long before text starts appearing
-const TEXT_IN     = 1200   // ms — fade+blur in duration
-const HOLD_TEXT   = 900    // ms — hold at full opacity
-const BTN_DELAY   = HOLD_START + TEXT_IN + HOLD_TEXT  // when button appears
-const EXIT_DUR    = 900    // ms — exit animation duration
+const HOLD_START  = 100
+const TEXT_IN     = 200
+const HOLD_TEXT   = 300
+const BTN_DELAY   = HOLD_START + TEXT_IN + HOLD_TEXT
+const EXIT_DUR    = 300
 
-export default function IntroScreen({ onDone }) {
+export default function IntroScreen({ onDone, progress = 0 }) {
   const [phase, setPhase]           = useState('in')
   const [btnVisible, setBtnVisible] = useState(false)
 
-  // Add blur class to body on mount, remove on exit
+  const loaded = progress >= 100
+
   useEffect(() => {
     document.body.classList.add('intro-active')
     return () => document.body.classList.remove('intro-active')
   }, [])
 
-  // Auto-sequence: in → hold → show button
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('hold'),    HOLD_START + TEXT_IN)
     const t2 = setTimeout(() => setBtnVisible(true), BTN_DELAY)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
-  // Triggered by clicking Explore
   const handleExplore = () => {
-    // Remove blur from canvas immediately as exit begins
+    if (!loaded) return
     document.body.classList.remove('intro-active')
     setPhase('exit')
     setTimeout(() => onDone?.(), EXIT_DUR + 100)
@@ -66,35 +65,51 @@ export default function IntroScreen({ onDone }) {
       {/* Centre content */}
       <div style={styles.centre}>
 
-        {/* Rule line top */}
         <div className={`intro-rule ${phase === 'exit' ? 'intro-rule--exit' : ''}`} />
 
-        {/* Small eyebrow */}
         <p className={`intro-eyebrow intro-${phase}`}>
           A DEVELOPER'S SPACE
         </p>
 
-        {/* Main title */}
         <h1 className={`intro-title intro-${phase}`}>
           Welcome to Aditya's<br />
           <span className="intro-title-accent">Portfolio</span>
         </h1>
 
-        {/* Subtitle */}
         <p className={`intro-sub intro-${phase}`}>
           Interactive · 3D · Immersive
         </p>
 
-        {/* Rule line bottom */}
         <div className={`intro-rule intro-rule--delayed ${phase === 'exit' ? 'intro-rule--exit' : ''}`} />
 
-        {/* Explore button */}
+        {/* ── Loading bar ── */}
+        <div className={`intro-progress-wrap intro-${phase}`}>
+          <div className="intro-progress-track">
+            <div
+              className="intro-progress-fill"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="intro-progress-label">
+            {loaded ? 'Ready' : `Loading scene… ${Math.round(progress)}%`}
+          </span>
+        </div>
+
+        {/* ── Explore button ── */}
         <div
-          className={`intro-btn-wrap ${btnVisible ? 'intro-btn-wrap--visible' : ''} ${phase === 'exit' ? 'intro-btn-wrap--exit' : ''}`}
+          className={[
+            'intro-btn-wrap',
+            btnVisible ? 'intro-btn-wrap--visible' : '',
+            phase === 'exit' ? 'intro-btn-wrap--exit' : '',
+          ].join(' ')}
         >
-          <button className="intro-btn" onClick={handleExplore}>
-            <span className="intro-btn-text">Explore</span>
-            <span className="intro-btn-arrow">→</span>
+          <button
+            className={`intro-btn ${!loaded ? 'intro-btn--disabled' : ''}`}
+            onClick={handleExplore}
+            disabled={!loaded}
+          >
+            <span className="intro-btn-text">{loaded ? 'Explore' : 'Loading…'}</span>
+            {loaded && <span className="intro-btn-arrow">→</span>}
             <div className="intro-btn-bg" />
           </button>
         </div>
@@ -108,7 +123,6 @@ export default function IntroScreen({ onDone }) {
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@200;400;600&display=swap');
 
-  /* ── Canvas blur while intro is active ── */
   body.intro-active canvas {
     filter: blur(14px) brightness(0.55);
     transition: filter 0.9s cubic-bezier(0.16,1,0.3,1);
@@ -125,44 +139,42 @@ const css = `
     from { transform: scaleX(0); opacity:0 }
     to   { transform: scaleX(1); opacity:1 }
   }
-
   @keyframes textIn {
-    from { opacity:0; filter:blur(18px); letter-spacing:0.35em; transform:translateY(6px)  }
-    to   { opacity:1; filter:blur(0px);  letter-spacing:inherit; transform:translateY(0)    }
+    from { opacity:0; filter:blur(18px); letter-spacing:0.35em; transform:translateY(6px) }
+    to   { opacity:1; filter:blur(0px);  letter-spacing:inherit; transform:translateY(0)  }
   }
   @keyframes textOut {
     from { opacity:1; filter:blur(0px);  transform:translateY(0)    }
     to   { opacity:0; filter:blur(18px); transform:translateY(-10px) }
   }
-
   @keyframes btnFadeIn {
     from { opacity:0; transform:translateY(14px); filter:blur(6px) }
     to   { opacity:1; transform:translateY(0);    filter:blur(0px) }
   }
   @keyframes btnFadeOut {
-    from { opacity:1; transform:translateY(0);    filter:blur(0px) }
+    from { opacity:1; transform:translateY(0);     filter:blur(0px) }
     to   { opacity:0; transform:translateY(-10px); filter:blur(8px) }
   }
-
   @keyframes arrowPulse {
-    0%,100% { transform: translateX(0) }
+    0%,100% { transform: translateX(0)  }
     50%      { transform: translateX(5px) }
   }
-
   @keyframes grainShift {
-    0%,100% { transform: translate(0,0) }
-    20%      { transform: translate(-2%,2%) }
-    40%      { transform: translate(2%,-2%) }
-    60%      { transform: translate(-1%,1%) }
-    80%      { transform: translate(1%,-1%) }
+    0%,100% { transform: translate(0,0)   }
+    20%      { transform: translate(-2%,2%)  }
+    40%      { transform: translate(2%,-2%)  }
+    60%      { transform: translate(-1%,1%)  }
+    80%      { transform: translate(1%,-1%)  }
+  }
+  @keyframes progressPulse {
+    0%,100% { opacity: 1   }
+    50%      { opacity: 0.5 }
   }
 
-  /* ── Text phases ── */
   .intro-in   { animation: textIn  ${TEXT_IN}ms  cubic-bezier(0.16,1,0.3,1) ${HOLD_START}ms both }
   .intro-hold { animation: textIn  ${TEXT_IN}ms  cubic-bezier(0.16,1,0.3,1) ${HOLD_START}ms both }
   .intro-exit { animation: textOut ${EXIT_DUR}ms cubic-bezier(0.7,0,1,1)    0ms           both }
 
-  /* ── Rules ── */
   .intro-rule {
     width: 220px;
     height: 1px;
@@ -171,10 +183,9 @@ const css = `
     transform-origin: center;
     animation: ruleSlide 1.2s cubic-bezier(0.16,1,0.3,1) ${HOLD_START + 200}ms both;
   }
-  .intro-rule--delayed  { margin: 22px auto 0; animation-delay: ${HOLD_START + 350}ms; }
-  .intro-rule--exit     { animation: textOut ${EXIT_DUR}ms cubic-bezier(0.7,0,1,1) 0ms both; }
+  .intro-rule--delayed { margin: 22px auto 0; animation-delay: ${HOLD_START + 350}ms; }
+  .intro-rule--exit    { animation: textOut ${EXIT_DUR}ms cubic-bezier(0.7,0,1,1) 0ms both; }
 
-  /* ── Eyebrow ── */
   .intro-eyebrow {
     font-family: 'Montserrat', sans-serif;
     font-weight: 200;
@@ -184,8 +195,6 @@ const css = `
     color: rgba(255,255,255,0.45);
     margin: 0 0 18px;
   }
-
-  /* ── Main title ── */
   .intro-title {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 300;
@@ -199,8 +208,6 @@ const css = `
     font-style: italic;
     color: rgba(255,255,255,1);
   }
-
-  /* ── Subtitle ── */
   .intro-sub {
     font-family: 'Montserrat', sans-serif;
     font-weight: 400;
@@ -212,9 +219,42 @@ const css = `
     animation-delay: ${HOLD_START + 200}ms !important;
   }
 
-  /* ── Explore button wrapper ── */
+  /* ── Progress bar ── */
+  .intro-progress-wrap {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .intro-progress-track {
+    width: 220px;
+    height: 1px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+  }
+  .intro-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.9));
+    border-radius: 1px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 6px rgba(255,255,255,0.4);
+  }
+  .intro-progress-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    animation: progressPulse 1.8s ease infinite;
+  }
+
+  /* ── Explore button ── */
   .intro-btn-wrap {
-    margin-top: 44px;
+    margin-top: 28px;
     opacity: 0;
     pointer-events: none;
   }
@@ -228,7 +268,6 @@ const css = `
     pointer-events: none;
   }
 
-  /* ── Explore button ── */
   .intro-btn {
     position: relative;
     display: inline-flex;
@@ -246,7 +285,12 @@ const css = `
     text-transform: uppercase;
     color: rgba(255,255,255,0.85);
     overflow: hidden;
-    transition: border-color 0.35s ease, color 0.35s ease;
+    transition: border-color 0.35s ease, color 0.35s ease, opacity 0.35s ease;
+  }
+  .intro-btn--disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: rgba(255,255,255,0.1);
   }
   .intro-btn-bg {
     position: absolute;
@@ -256,16 +300,14 @@ const css = `
     transform-origin: left;
     transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
   }
-  .intro-btn:hover .intro-btn-bg    { transform: scaleX(1); }
-  .intro-btn:hover                  { border-color: rgba(255,255,255,0.55); color: #fff; }
-  .intro-btn:hover .intro-btn-arrow { animation: arrowPulse 0.7s ease infinite; }
-  .intro-btn:active                 { transform: scale(0.97); }
-
+  .intro-btn:not(.intro-btn--disabled):hover .intro-btn-bg    { transform: scaleX(1); }
+  .intro-btn:not(.intro-btn--disabled):hover                  { border-color: rgba(255,255,255,0.55); color: #fff; }
+  .intro-btn:not(.intro-btn--disabled):hover .intro-btn-arrow { animation: arrowPulse 0.7s ease infinite; }
+  .intro-btn:not(.intro-btn--disabled):active                 { transform: scale(0.97); }
   .intro-btn-text  { position: relative; z-index: 1; }
   .intro-btn-arrow { position: relative; z-index: 1; font-size: 14px; opacity: 0.7; }
 `
 
-// ── Inline styles ─────────────────────────────────────────────────────────────
 const styles = {
   overlay: {
     position:       'fixed',
@@ -289,14 +331,14 @@ const styles = {
   },
   barTop: {
     position:   'absolute',
-    top:         0, left: 0, right: 0,
+    top: 0, left: 0, right: 0,
     height:     'clamp(96px, 5vh, 56px)',
     background:  '#000',
     pointerEvents: 'none',
   },
   barBottom: {
     position:   'absolute',
-    bottom:      0, left: 0, right: 0,
+    bottom: 0, left: 0, right: 0,
     height:     'clamp(96px, 5vh, 56px)',
     background:  '#000',
     pointerEvents: 'none',
@@ -313,4 +355,3 @@ const styles = {
     zIndex:     1,
   },
 }
-
