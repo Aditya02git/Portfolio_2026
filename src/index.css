@@ -1,0 +1,51 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+html, body, #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000000 !important;
+}
+canvas {
+    background: #000000 !important;
+}
+
+/* ── Scrollbar — matches parchment modal theme ─────────────────────────────── */
+
+/* Width */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track — parchment background */
+::-webkit-scrollbar-track {
+  background: #f5e4a8;
+  border-radius: 10px;
+  border: 1px solid #c9a22744;
+}
+
+/* Thumb — gold gradient matching modal accents */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c9a227, #8B6914);
+  border-radius: 10px;
+  border: 2px solid #f5e4a8;
+}
+
+/* Hover — brighter gold */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f5c842, #c9a227);
+}
+
+/* ── Modal animations ───────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px) }
+  to   { opacity: 1; transform: scale(1)    translateY(0)    }
+}
