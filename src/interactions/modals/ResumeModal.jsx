@@ -3,7 +3,7 @@ import ModalWrapper from './ModalWrapper.jsx'
 const resumeData = {
   name: 'Aditya Mondal',
   title: 'Full Stack Developer & 3D Creative',
-  email: 'm.adityamondal@email.com',
+  email: 'm.adityamondal@gmail.com',
   github: 'https://github.com/Aditya02git',
   linkedin: 'https://www.linkedin.com/in/aditya-mondal-aa9658288/',
   about: 'Passionate developer crafting immersive web experiences at the intersection of code and creativity. Specialising in modern full-stack development with game development.',

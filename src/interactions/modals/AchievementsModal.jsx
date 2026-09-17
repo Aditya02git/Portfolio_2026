@@ -2,7 +2,6 @@ import ModalWrapper from './ModalWrapper.jsx'
 
 const achievements = [
   { icon: '🏆', title: 'Hackathon Finalist', desc: 'Hackfest 2025 MSIT', year: '2025' },
-  { icon: '🌐', title: 'Open Source Contributor', desc: 'Contributed to Three.js and React Three Fiber ecosystems', year: '2025' },
 ]
 
 export default function AchievementsModal({ onClose }) {

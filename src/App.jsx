@@ -28,7 +28,7 @@ import HintLabel from './interactions/HintLabel.jsx'
 import SkillDiscovery from './interactions/SkillDiscovery.jsx'
 import { useInteraction } from './interactions/useInteraction.js'
 import { useLights } from './interactions/useLights.js'
-import { WEATHER_MODE } from './weather/weatherMode.js'
+import { WEATHER_MODES, getRandomWeatherMode } from './weather/weatherMode.js'
 import { useAudio } from './audio/useAudio.js'
 import LoaderScreen from './ui/LoaderScreen.jsx'   // ← NEW
 import IntroScreen from './ui/IntroScreen.jsx'
@@ -53,6 +53,7 @@ export default function App() {
   const [cycleDuration, setCycleDuration]   = useState(60)
   const [hoveredName, setHoveredName]       = useState(null)
   const [skillTrigger, setSkillTrigger]     = useState(null)
+  const [weatherMode, setWeatherMode]       = useState(getRandomWeatherMode)
 
   const progressRef      = useRef(0)
   const cycleDurationRef = useRef(60)
@@ -61,7 +62,7 @@ export default function App() {
   const flyingRef        = useRef(false)
 
   const { activeModal, handleClick, closeModal } = useInteraction()
-  const { muted, toggleMute, togglePlaylist, playClick, playPaper, playAchievement, playDrawer, playCat, nowPlaying } = useAudio(progressRef, WEATHER_MODE)
+  const { muted, toggleMute, togglePlaylist, playClick, playPaper, playAchievement, playDrawer, playCat, nowPlaying } = useAudio(progressRef, weatherMode)
   const { wallLampOn, tubeLightOn, flickering, toggleWallLamp, toggleTubeLight, syncWithDayCycle } = useLights({
     onAutoOn: () => playClick(true)
   })
@@ -204,7 +205,7 @@ export default function App() {
           />
           {ready && scene3D && (
             <>
-              <Renderer progressRef={progressRef} cycleDurationRef={cycleDurationRef} mode={WEATHER_MODE} />
+              <Renderer progressRef={progressRef} cycleDurationRef={cycleDurationRef} mode={weatherMode} />
               <OutlineEffect />
               <WallLampLight  on={wallLampOn}  scene={scene3D} />
               <TubeLightLight on={tubeLightOn} flickering={flickering} scene={scene3D} />
@@ -236,7 +237,8 @@ export default function App() {
             progressRef={progressRef}
             cycleDuration={cycleDuration}
             setCycleDuration={setCycleDuration}
-            mode={WEATHER_MODE}
+            mode={weatherMode}
+            setMode={setWeatherMode}
           />
           <HintLabel hoveredName={hoveredName} />
           <ModalRouter activeModal={activeModal} onClose={closeModal} />

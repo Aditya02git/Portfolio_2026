@@ -67,9 +67,19 @@ export const SKILLS = [
     name: 'Mongo DB',
     icon: '✨',
     category: 'Database',
-    level: 'Intermediate',
+    level: 'Beginner',
     desc: 'NoSQL database for storing and retrieving large volumes of data.',
     color: '#f7df1e',
+  },
+  {
+    id: 'reactjs',
+    meshNames: ['React_2'],
+    name: 'React Js',
+    icon: '⚛️',
+    category: 'Web Dev',
+    level: 'Intermediate',
+    desc: 'Building fast, component-based UIs and single-page applications with React.',
+    color: '#61dafb',
   },
 ]
 

@@ -6,28 +6,34 @@ export function isACMesh(name) {
   return name.toLowerCase().startsWith('ac')
 }
 
-// ── AC startup sound with fade-out ────────────────────────────────────────────
-function playAcStartSound() {
-  const audio = new Audio('/sounds/ac/ac-start.mp3')
-  audio.volume = 1.0
+// ── Shared: play a one-shot clip with a fade-out over its last portion ───────
+function playFadingClip(src, { volume = 1.0, fadeStart = 0.6, fadeStep = 0.07, fadeInterval = 50 } = {}) {
+  const audio = new Audio(src)
+  audio.volume = volume
   audio.play().catch(() => {})   // ignore autoplay policy errors silently
 
-  // Fade out over the last portion of the clip
-  const FADE_START = 0.6        // start fading at 60% of duration
-  const FADE_INTERVAL = 50      // ms between volume steps
-
   const ticker = setInterval(() => {
-    if (audio.duration && audio.currentTime / audio.duration >= FADE_START) {
-      audio.volume = Math.max(0, audio.volume - 0.07)
+    if (audio.duration && audio.currentTime / audio.duration >= fadeStart) {
+      audio.volume = Math.max(0, audio.volume - fadeStep)
       if (audio.volume <= 0) {
         clearInterval(ticker)
         audio.pause()
       }
     }
-  }, FADE_INTERVAL)
+  }, fadeInterval)
 
   // Safety cleanup if the clip ends naturally before fade completes
   audio.addEventListener('ended', () => clearInterval(ticker), { once: true })
+}
+
+// ── AC startup sound ──────────────────────────────────────────────────────────
+function playAcStartSound() {
+  playFadingClip('/sounds/ac/ac-start.mp3')
+}
+
+// ── AC shutdown sound ─────────────────────────────────────────────────────────
+function playAcStopSound() {
+  playFadingClip('/sounds/ac/ac-stop.mp3')
 }
 
 export function useAC(gltf, mixerRef, mixerReady) {
@@ -83,7 +89,8 @@ export function useAC(gltf, mixerRef, mixerReady) {
       actionRef.current.paused = false
       console.log('[AC] ON ✓')
     } else {
-      // Turn OFF — fade out animation over 0.5s then hold at frame 0
+      // Turn OFF — play shutdown sound, fade out animation over 0.5s then hold at frame 0
+      playAcStopSound()
       actionRef.current.fadeOut(0.5)
       setTimeout(() => {
         if (!actionRef.current) return

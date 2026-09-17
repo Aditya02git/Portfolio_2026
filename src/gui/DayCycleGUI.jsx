@@ -1,15 +1,91 @@
 import { useEffect, useState } from 'react'
 import { getTimeLabel } from '../weather/dayCycle.js'
+import { WEATHER_MODES } from '../weather/weatherMode.js'
 import {
   colors, fonts, googleFontsImport,
   btnStyle, cornerCSS,
 } from '../theme/theme.js'
 
+// ── Remade Inline SVG weather icons (inherit color via currentColor) ────────
+const WeatherIcon = ({ type, size = 14 }) => {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round'
+  }
+
+  switch (type) {
+    case 'rainy':
+      return (
+        <svg {...common}>
+          {/* Cloud Base */}
+          <path d="M4 14.8A4.5 4.5 0 0 1 7.5 8 6 6 0 0 1 18 10a4 4 0 0 1-1 7.8H6.5" />
+          {/* Angled Rain Drops */}
+          <path d="M8 15v4" transform="rotate(15 8 17)" />
+          <path d="M12 15v4" transform="rotate(15 12 17)" />
+          <path d="M16 15v4" transform="rotate(15 16 17)" />
+        </svg>
+      )
+
+    case 'cloudy':
+      return (
+        <svg {...common}>
+          {/* Sun peek */}
+          <path d="M12 3a6 6 0 0 1 5.65 4" strokeDasharray="2 2" />
+          <line x1="12" y1="1" x2="12" y2="2" />
+          <line x1="17" y1="3" x2="16.3" y2="3.7" />
+          {/* Main Cloud */}
+          <path d="M5 18a4.5 4.5 0 0 1 3.2-7.7 6 6 0 0 1 10.3 2.2 4 4 0 0 1 .5 7.5H6" />
+        </svg>
+      )
+
+    case 'snow':
+      return (
+        <svg {...common}>
+          {/* Main Axis */}
+          <line x1="12" y1="2" x2="12" y2="22" />
+          <line x1="3.34" y1="7" x2="20.66" y2="17" />
+          <line x1="3.34" y1="17" x2="20.66" y2="7" />
+          {/* Snowflake Branch Details */}
+          <path d="M10 4l2 2 2-2" />
+          <path d="M10 20l2-2 2 2" />
+          <path d="M4.5 9.5l2.7-.3.8-2.7" />
+          <path d="M16 17.5l.8-2.7 2.7-.3" />
+          <path d="M4.5 14.5l2.7.3.8 2.7" />
+          <path d="M16 6.5l.8 2.7 2.7.3" />
+        </svg>
+      )
+
+    case 'normal':
+    default:
+      return (
+        <svg {...common}>
+          {/* Sun Core */}
+          <circle cx="12" cy="12" r="4" />
+          {/* Symmetrical Sun Rays */}
+          <line x1="12" y1="2" x2="12" y2="4" />
+          <line x1="12" y1="20" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="4" y2="12" />
+          <line x1="20" y1="12" x2="22" y2="12" />
+          <line x1="4.93" y1="4.93" x2="6.34" y2="6.34" />
+          <line x1="17.66" y1="17.66" x2="19.07" y2="19.07" />
+          <line x1="17.66" y1="6.34" x2="19.07" y2="4.93" />
+          <line x1="4.93" y1="19.07" x2="6.34" y2="17.66" />
+        </svg>
+      )
+  }
+}
+
 const modeConfig = {
-  normal: { label: '🌤 Normal', accent: '#c9a227', glow: 'rgba(245,200,66,0.35)',  badgeBg: 'rgba(197,162,39,0.18)', badgeBorder: '#c9a227', badgeColor: '#000000' },
-  rainy:  { label: '🌧 Rainy',  accent: '#5588ff', glow: 'rgba(80,140,255,0.35)',  badgeBg: 'rgba(80,120,220,0.2)',  badgeBorder: '#c9a227', badgeColor: '#000000' },
-  cloudy: { label: '☁️ Cloudy', accent: '#aaaacc', glow: 'rgba(160,160,200,0.3)',  badgeBg: 'rgba(120,120,160,0.2)', badgeBorder: '#c9a227', badgeColor: '#000000' },
-  snow:   { label: '❄️ Snow',   accent: '#88ccff', glow: 'rgba(150,210,255,0.3)',  badgeBg: 'rgba(150,210,255,0.2)', badgeBorder: '#c9a227', badgeColor: '#000000' },
+  normal: { name: 'Normal', accent: '#c9a227', glow: 'rgba(245,200,66,0.35)',  badgeBg: 'rgba(197,162,39,0.18)', badgeBorder: '#c9a227', badgeColor: '#ffffff' },
+  rainy:  { name: 'Rainy',  accent: '#5588ff', glow: 'rgba(80,140,255,0.35)',  badgeBg: 'rgba(80,120,220,0.2)',  badgeBorder: '#c9a227', badgeColor: '#ffffff' },
+  cloudy: { name: 'Cloudy', accent: '#aaaacc', glow: 'rgba(160,160,200,0.3)',  badgeBg: 'rgba(120,120,160,0.2)', badgeBorder: '#c9a227', badgeColor: '#ffffff' },
+  snow:   { name: 'Snow',   accent: '#88ccff', glow: 'rgba(150,210,255,0.3)',  badgeBg: 'rgba(150,210,255,0.2)', badgeBorder: '#c9a227', badgeColor: '#ffffff' },
 }
 
 const barColors = {
@@ -21,7 +97,7 @@ const barColors = {
 
 const segLabels = ['Day', 'Dusk', 'Night', 'Dawn', 'Day']
 
-export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDuration, mode }) {
+export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDuration, mode, setMode }) {
   const [displayProgress, setDisplayProgress] = useState(0)
   const [paused,   setPaused]   = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -137,7 +213,7 @@ export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDurati
           border-top: none;
           border-radius: 0 0 10px 10px;
           overflow: hidden;
-          max-height: 380px; opacity: 1;
+          max-height: 560px; opacity: 1;
           transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
         }
         .dcg-body.collapsed { max-height: 0; opacity: 0; }
@@ -189,6 +265,27 @@ export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDurati
           display: block; margin-bottom: 5px;
         }
         .dcg-section-value { color: ${colors.textDark}; font-weight: 500; font-style: normal; }
+
+        /* weather selector */
+        .dcg-weather-row {
+          display: flex; flex-wrap: wrap; gap: 6px;
+          margin-bottom: 13px;
+        }
+        .dcg-weather-btn {
+          flex: 1 1 calc(50% - 6px);
+          padding: 5px 6px;
+          font-family: ${fonts.body};
+          font-size: 10.5px;
+          border-radius: 20px;
+          border: 1px solid ${colors.goldMid}44;
+          background: transparent;
+          color: ${colors.textDark};
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s, transform 0.1s;
+          white-space: nowrap;
+        }
+        .dcg-weather-btn:hover { transform: translateY(-1px); }
+        .dcg-weather-btn.active { font-weight: 700; }
 
         /* sliders */
         .dcg-slider {
@@ -252,23 +349,13 @@ export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDurati
           onClick={() => setExpanded(e => !e)}
         >
           <div className="dcg-header-left">
-            <div className="dcg-icon"><i class="fa fa-clock-o" aria-hidden="true" style={{color: 'white'}}></i></div>
+            <div className="dcg-icon" style={{ color: '#ffffff' }}><WeatherIcon type={mode} size={16} /></div>
             <div>
               <span className="dcg-title">DAY CYCLE</span>
               <span className="dcg-subtitle">Time & Weather</span>
             </div>
           </div>
 
-          <span
-            className="dcg-badge"
-            style={{
-              background:  cfg.badgeBg,
-              borderColor: cfg.badgeBorder,
-              color:        cfg.badgeColor,
-            }}
-          >
-            {cfg.label}
-          </span>
 
           <span className={`dcg-chevron ${expanded ? 'open' : ''}`}>▼</span>
         </div>
@@ -298,6 +385,38 @@ export default function DayCycleGUI({ progressRef, cycleDuration, setCycleDurati
             </div>
             <div className="dcg-seg-labels">
               {segLabels.map((l, i) => <span key={i}>{l}</span>)}
+            </div>
+
+            <div className="dcg-divider">
+              <div className="dcg-divider-line" />
+              <span className="dcg-divider-ornament">❧</span>
+              <div className="dcg-divider-line" />
+            </div>
+
+            {/* Weather */}
+            <label className="dcg-section-label">
+              Weather — <span className="dcg-section-value" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><WeatherIcon type={mode} size={12} /> {cfg.name}</span>
+            </label>
+            <div className="dcg-weather-row">
+              {WEATHER_MODES.map((m) => {
+                const mCfg = modeConfig[m] ?? modeConfig.normal
+                const active = m === mode
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode?.(m)}
+                    className={`dcg-weather-btn ${active ? 'active' : ''}`}
+                    style={{
+                      borderColor: active ? mCfg.badgeBorder : `${colors.goldMid}44`,
+                      background: active ? mCfg.badgeBg : 'transparent',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    }}
+                  >
+                    <WeatherIcon type={m} /> {mCfg.name}
+                  </button>
+                )
+              })}
             </div>
 
             <div className="dcg-divider">
